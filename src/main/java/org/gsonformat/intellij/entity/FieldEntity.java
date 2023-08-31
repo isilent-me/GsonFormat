@@ -1,5 +1,6 @@
 package org.gsonformat.intellij.entity;
 
+
 import org.apache.http.util.TextUtils;
 import org.gsonformat.intellij.common.CheckUtil;
 import org.jdesktop.swingx.ux.CellProvider;
@@ -65,6 +66,9 @@ public class FieldEntity implements Selector, CellProvider {
         if (targetClass != null) {
             return targetClass.getClassName();
         }
+        if(nameContainsId() && isTypeInt()){
+            type = "long";
+        }
         return type;
     }
 
@@ -76,18 +80,50 @@ public class FieldEntity implements Selector, CellProvider {
         if (i > 0) {
             return type.substring(i);
         }
-        return type;
-    }
-
-    public String getFullNameType() {
-        if (targetClass != null) {
-            return targetClass.getQualifiedName();
+        if(nameContainsId() && isTypeInt()){
+            type = "long";
         }
         return type;
     }
 
+    private boolean nameContainsId(){
+        if(TextUtils.isEmpty(fieldName)){
+            return false;
+        }
+        String filedName = getGenerateFieldName();
+        return filedName.contains("id") || filedName.contains("Id");
+    }
+
+    private boolean isTypeInt(){
+        return "int".equals(type) || "Integer".equals(type);
+    }
+
+    public String getFullNameType() {
+
+        String filedName = getGenerateFieldName();
+
+        String filedType = type;
+        if (targetClass != null) {
+            filedType =  targetClass.getQualifiedName();
+        }
+
+        //如果key里带id/Id,且将被指定为int,Integer,那么自动将其指定为long
+        if("int".equals(filedType) || "Integer".equals(filedType)){
+            if(filedName.contains("id") || filedName.contains("Id")){
+                filedType = "long";
+            }
+        }
+        type = "long";
+
+        return filedType;
+    }
+
     public void setType(String type) {
         this.type = type;
+        if(nameContainsId() && isTypeInt()){
+            this.type = "long";
+        }
+
     }
 
     public void checkAndSetType(String text) {
